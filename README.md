@@ -22,7 +22,8 @@ GitHub Actions (cron */10)                  Supabase Edge Function «bot» (ве
 | Фильтр по ключевым словам и минимальному бюджету | ✅ |
 | Бот с кнопками: меню, слова, бюджет, пауза, «Скрыть» под заказом. Отвечает сразу (вебхук) | ✅ |
 | Запуск каждые 10 минут в GitHub Actions | ✅ |
-| Тесты парсеров на сохранённых страницах (vitest) | ✅ |
+| Веб-страница: список заказов, поиск, фильтр по источнику и бюджету, светлая/тёмная тема | ✅ локально |
+| Тесты: парсеры на сохранённых страницах, фильтр, меню бота, фильтр веб-страницы (vitest) | ✅ |
 
 ## Ограничения (честно)
 
@@ -70,6 +71,18 @@ npm start              # один полный прогон
 
 `.env` лежит в `.gitignore`. Для GitHub Actions те же 4 серверные переменные задаются в
 **Settings → Secrets and variables → Actions**.
+
+### Веб-страница
+
+```bash
+cd web
+npm install
+npm run dev            # http://localhost:5173
+```
+
+Берёт `VITE_SUPABASE_URL` и `VITE_SUPABASE_PUBLISHABLE_KEY` из общего `.env` в корне (`envDir: ".."` в
+[vite.config.ts](web/vite.config.ts)). Publishable-ключ попадает в браузер, и это нормально: по правам базы
+(миграция 003) он может только **читать** `orders`. Запись в `orders` и любой доступ к `settings` ему запрещены.
 
 ### База
 
@@ -120,7 +133,10 @@ src/
 supabase/functions/bot/
   index.ts           Edge Function: вебхук Telegram, проверка секрета, база
   menu.ts            экраны и реакции на кнопки, чистые функции (+ menu.test.ts)
-supabase/migrations/ схема базы
+supabase/migrations/ схема базы и права (003: publishable-ключ только читает orders)
+web/src/
+  App.tsx            страница: загрузка раз в минуту, фильтры, карточки
+  orders.ts          загрузка из Supabase, фильтр, «N мин назад» (+ orders.test.ts)
 .github/workflows/radar.yml   cron каждые 10 минут
 ```
 
