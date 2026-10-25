@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { env } from "./env.js";
+import type { Settings } from "./filter.js";
 import type { Order } from "./types.js";
 
 // Secret-ключ обходит RLS, поэтому этот модуль живёт только на сервере.
@@ -64,10 +65,29 @@ export async function getUnnotified(): Promise<StoredOrder[]> {
   }));
 }
 
+// notified_at = «заказ обработан»: отправлен в Telegram или отсеян фильтром. В обоих случаях повторно не смотрим.
 export async function markNotified(id: number): Promise<void> {
   const { error } = await supabase
     .from("orders")
     .update({ notified_at: new Date().toISOString() })
     .eq("id", id);
   if (error) throw new Error(`Supabase update: ${error.message}`);
+}
+
+export async function getSettings(): Promise<Settings> {
+  const { data, error } = await supabase.from("settings").select("keywords, min_budget").eq("id", 1).single();
+  if (error) throw new Error(`Supabase settings: ${error.message}`);
+  return { keywords: data.keywords, minBudget: Number(data.min_budget) };
+}
+
+export async function updateSettings(update: Partial<Settings>): Promise<void> {
+  const { error } = await supabase
+    .from("settings")
+    .update({
+      ...(update.keywords && { keywords: update.keywords }),
+      ...(update.minBudget !== undefined && { min_budget: update.minBudget }),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", 1);
+  if (error) throw new Error(`Supabase settings update: ${error.message}`);
 }

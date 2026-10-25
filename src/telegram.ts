@@ -22,6 +22,25 @@ export async function sendOrder(order: Order): Promise<void> {
   });
 }
 
+export async function sendText(text: string): Promise<void> {
+  await api.sendMessage(chatId, text);
+}
+
+// Скрипт не висит постоянно, поэтому при каждом запуске забираем накопившиеся сообщения (Telegram хранит их 24 часа).
+// Берём только сообщения из своего чата: бот публичный, и чужие люди не должны менять фильтры.
+export async function getMyMessages(): Promise<{ texts: string[]; lastUpdateId: number | null }> {
+  const updates = await api.getUpdates({ timeout: 0, allowed_updates: ["message"] });
+  const texts = updates
+    .filter((u) => String(u.message?.chat.id) === chatId && u.message?.text)
+    .map((u) => u.message!.text!);
+  return { texts, lastUpdateId: updates.at(-1)?.update_id ?? null };
+}
+
+// Запрос с offset = последний + 1 говорит Telegram «эти обработаны», и они больше не придут.
+export async function confirmMessages(lastUpdateId: number): Promise<void> {
+  await api.getUpdates({ offset: lastUpdateId + 1, limit: 1, timeout: 0 });
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
