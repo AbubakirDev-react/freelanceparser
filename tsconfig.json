@@ -7,7 +7,8 @@
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src", "supabase/functions/bot/menu.ts", "supabase/functions/bot/menu.test.ts"]
 }

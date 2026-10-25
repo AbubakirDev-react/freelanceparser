@@ -74,20 +74,9 @@ export async function markNotified(id: number): Promise<void> {
   if (error) throw new Error(`Supabase update: ${error.message}`);
 }
 
+// Настройки меняет только бот (supabase/functions/bot), скрипт их лишь читает.
 export async function getSettings(): Promise<Settings> {
-  const { data, error } = await supabase.from("settings").select("keywords, min_budget").eq("id", 1).single();
+  const { data, error } = await supabase.from("settings").select("keywords, min_budget, paused").eq("id", 1).single();
   if (error) throw new Error(`Supabase settings: ${error.message}`);
-  return { keywords: data.keywords, minBudget: Number(data.min_budget) };
-}
-
-export async function updateSettings(update: Partial<Settings>): Promise<void> {
-  const { error } = await supabase
-    .from("settings")
-    .update({
-      ...(update.keywords && { keywords: update.keywords }),
-      ...(update.minBudget !== undefined && { min_budget: update.minBudget }),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", 1);
-  if (error) throw new Error(`Supabase settings update: ${error.message}`);
+  return { keywords: data.keywords, minBudget: Number(data.min_budget), paused: data.paused };
 }

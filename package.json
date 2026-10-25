@@ -6,7 +6,8 @@
   "scripts": {
     "start": "tsx --env-file-if-exists=.env src/main.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "bot:setup": "tsx --env-file-if-exists=.env src/setup-bot.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
