@@ -23,6 +23,12 @@ describe("parseKwork", () => {
     expect(order?.description).toContain("привлечении клиентов");
   });
 
+  it("декодирует HTML-сущности: kwork отдаёт «&laquo;ЗНАК&raquo;» вместо «ЗНАК»", () => {
+    for (const o of parseKwork(html)) {
+      expect(`${o.title} ${o.description}`).not.toMatch(/&[a-z]+;|&#\d+;/);
+    }
+  });
+
   it("падает с понятной ошибкой, если вёрстка изменилась", () => {
     expect(() => parseKwork("<html><body>Новый дизайн</body></html>")).toThrow(/stateData/);
   });

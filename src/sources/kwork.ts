@@ -20,8 +20,8 @@ export function parseKwork(html: string): Order[] {
   return state.wants.map((w) => ({
     source: "kwork",
     externalId: String(w.id),
-    title: w.name.trim(),
-    description: w.description.replace(/\r\n/g, "\n").trim(),
+    title: decodeEntities(w.name).trim(),
+    description: decodeEntities(w.description).replace(/\r\n/g, "\n").trim(),
     budget: Number(w.priceLimit) || null,
     url: `https://kwork.ru/projects/${w.id}/view`,
     publishedAt: new Date(`${w.date_create.replace(" ", "T")}+03:00`),
@@ -34,6 +34,23 @@ export const kworkSource: OrderSource = {
     return parseKwork(await fetchPage(LIST_URL));
   },
 };
+
+// kwork хранит текст заказа с HTML-сущностями («&laquo;ЗНАК&raquo;»). Список — то, что реально встречается
+// на kwork. Незнакомую сущность оставляем как есть: это лучше, чем потерять символ.
+const ENTITIES: Record<string, string> = {
+  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ",
+  laquo: "«", raquo: "»", mdash: "—", ndash: "–", bull: "•", hellip: "…",
+};
+
+function decodeEntities(s: string): string {
+  return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, code: string) => {
+    if (code[0] === "#") {
+      const n = code[1]?.toLowerCase() === "x" ? parseInt(code.slice(2), 16) : Number(code.slice(1));
+      return Number.isNaN(n) ? match : String.fromCodePoint(n);
+    }
+    return ENTITIES[code.toLowerCase()] ?? match;
+  });
+}
 
 // Данные лежат в <script> как `window.stateData={...};`. Находим конец объекта по парным скобкам,
 // не считая скобки внутри строк, и отдаём кусок в JSON.parse.
