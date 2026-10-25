@@ -1,10 +1,11 @@
 import { getUnnotified, markNotified, saveOrders } from "./db.js";
 import { BlockedError } from "./http.js";
+import { flSource } from "./sources/fl.js";
 import { kworkSource } from "./sources/kwork.js";
 import { sendOrder } from "./telegram.js";
 import type { OrderSource } from "./types.js";
 
-const sources: OrderSource[] = [kworkSource];
+const sources: OrderSource[] = [kworkSource, flSource];
 let failed = false;
 
 // Ошибка одного источника не должна мешать остальным.
