@@ -1,0 +1,36 @@
+name: Order Radar
+
+on:
+  schedule:
+    # Каждые 10 минут (UTC). GitHub может задерживать cron на несколько минут, это нормально.
+    # 10, а не 5: так точно не чаще раза в 5 минут на источник даже при задержках и ручных запусках.
+    - cron: "*/10 * * * *"
+  workflow_dispatch: # кнопка «Run workflow» для ручного запуска
+  push:
+    branches: [main]
+
+# Два запуска одновременно не нужны: второй ждёт окончания первого.
+concurrency:
+  group: radar
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      # На push только тесты: парсим площадки лишь по расписанию или вручную.
+      - if: github.event_name != 'push'
+        run: npm start
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
